@@ -390,8 +390,7 @@
           (kbd "C-f") #'neoscroll-ctrl-f
           (kbd "C-b") #'neoscroll-ctrl-b
           (kbd "C-y") #'neoscroll-ctrl-y
-          (kbd "C-e") #'neoscroll-ctrl-e
-          (kbd "C-g") #'neoscroll-emergency-stop)))))
+          (kbd "C-e") #'neoscroll-ctrl-e)))))
 
 (defun neoscroll--remove-evil-integration ()
   "Remove Evil mode integration."
