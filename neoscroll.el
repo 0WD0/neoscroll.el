@@ -76,9 +76,14 @@
   :type 'float
   :group 'neoscroll)
 
-(defcustom neoscroll-line-duration 0.05
+(defcustom neoscroll-line-duration 0.025
   "Default duration for C-y/C-e line scrolling in seconds."
   :type 'float
+  :group 'neoscroll)
+
+(defcustom neoscroll-line-step 1
+  "Number of lines to scroll with C-y/C-e commands."
+  :type 'integer
   :group 'neoscroll)
 
 ;;
@@ -331,16 +336,16 @@
 
 ;;;###autoload
 (defun neoscroll-ctrl-y (&optional opts)
-  "Smooth scroll up one line."
+  "Smooth scroll up by configured line step."
   (interactive)
-  (neoscroll-scroll -1
+  (neoscroll-scroll (- neoscroll-line-step)
                    (append opts `(:duration ,neoscroll-line-duration :move-cursor nil))))
 
 ;;;###autoload
 (defun neoscroll-ctrl-e (&optional opts)
-  "Smooth scroll down one line."
+  "Smooth scroll down by configured line step."
   (interactive)
-  (neoscroll-scroll 1
+  (neoscroll-scroll neoscroll-line-step
                    (append opts `(:duration ,neoscroll-line-duration :move-cursor nil))))
 
 ;;
