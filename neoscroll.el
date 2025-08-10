@@ -380,9 +380,9 @@
       (neoscroll--interrupt)
       (keyboard-quit))
     
-    ;; Set up Evil keybindings (only in normal and visual states)
+    ;; Set up Evil keybindings
     (when (fboundp 'evil-define-key*)
-      ;; Bind in normal, visual, and motion states, but not insert
+      ;; Bind in normal and visual states, but not insert or motion states
       (dolist (state '(normal visual))
         (evil-define-key* state 'global
           (kbd "C-d") #'neoscroll-ctrl-d
