@@ -1,0 +1,188 @@
+#+TITLE: Neoscroll.el - Smooth Scrolling for Emacs
+#+AUTHOR: Yuantao Wang
+#+VERSION: 1.0.0
+
+* Overview
+
+Neoscroll provides smooth scrolling functionality for Emacs, inspired by [[https://github.com/karb94/neoscroll.nvim][neoscroll.nvim]]. It offers customizable easing functions, native compilation support for performance, and seamless integration with Evil mode.
+
+* Features
+
+- Multiple easing functions (linear, quadratic, cubic, sine)
+- Pixel-perfect smooth scrolling
+- Native compilation for maximum performance  
+- Interrupt handling for responsive input
+- Evil mode integration
+- Customizable scroll durations
+- Automatic pixel-scroll-precision-mode integration
+
+* Installation
+
+** Using straight.el
+
+#+begin_src emacs-lisp
+(straight-use-package '(neoscroll :type git :host github :repo "0WD0/neoscroll.el"))
+#+end_src
+
+** Using use-package with straight.el
+
+#+begin_src emacs-lisp
+(use-package neoscroll
+  :straight (:type git :host github :repo "0WD0/neoscroll.el")
+  :config
+  (neoscroll-mode 1))
+#+end_src
+
+* Configuration
+
+** Basic Setup
+
+Enable neoscroll globally:
+
+#+begin_src emacs-lisp
+(require 'neoscroll)
+(neoscroll-mode 1)
+#+end_src
+
+** Custom Configuration
+
+#+begin_src emacs-lisp
+(use-package neoscroll
+  :config
+  ;; Customize easing function
+  (setq neoscroll-easing 'cubic)
+  
+  ;; Adjust scroll durations (in seconds)
+  (setq neoscroll-scroll-duration 0.2)    ; C-u/C-d
+  (setq neoscroll-page-duration 0.3)      ; C-f/C-b  
+  (setq neoscroll-line-duration 0.1)      ; C-y/C-e
+  
+  ;; Add custom hooks
+  (setq neoscroll-pre-hook
+        (lambda (info) (message "Starting scroll: %s" info)))
+  (setq neoscroll-post-hook
+        (lambda (info) (message "Scroll complete: %s" info)))
+  
+  ;; Enable mode
+  (neoscroll-mode 1))
+#+end_src
+
+** Advanced Setup with Custom Options
+
+#+begin_src emacs-lisp
+(neoscroll-setup '((easing . cubic)
+                   (scroll-duration . 0.15)
+                   (page-duration . 0.25)
+                   (line-duration . 0.05)))
+#+end_src
+
+* Key Bindings
+
+Default key mappings (automatically set up when enabling ~neoscroll-mode~):
+
+| Key | Function         | Description           |
+|-----+------------------+-----------------------|
+| ~C-u~ | ~neoscroll-ctrl-u~ | Scroll up half page   |
+| ~C-d~ | ~neoscroll-ctrl-d~ | Scroll down half page |
+| ~C-b~ | ~neoscroll-ctrl-b~ | Scroll up full page   |
+| ~C-f~ | ~neoscroll-ctrl-f~ | Scroll down full page |
+| ~C-y~ | ~neoscroll-ctrl-y~ | Scroll up one line    |
+| ~C-e~ | ~neoscroll-ctrl-e~ | Scroll down one line  |
+
+** Evil Mode Integration
+
+When Evil mode is detected, neoscroll automatically:
+- Integrates with Evil's normal state
+- Provides emergency stops with ~<Escape>~ and ~C-g~
+- Interrupts animations when other movement commands are used
+
+* Customization Options
+
+** Variables
+
+- ~neoscroll-easing~ :: Easing function (~linear~, ~quadratic~, ~cubic~, ~sine~)
+- ~neoscroll-scroll-duration~ :: Duration for half-page scrolling (default: 0.15s)
+- ~neoscroll-page-duration~ :: Duration for full-page scrolling (default: 0.25s) 
+- ~neoscroll-line-duration~ :: Duration for line scrolling (default: 0.05s)
+- ~neoscroll-mappings~ :: List of keys to bind (default: C-u, C-d, C-b, C-f, C-y, C-e)
+- ~neoscroll-stop-eof~ :: Stop at end of file when scrolling down (default: t)
+- ~neoscroll-pre-hook~ :: Function to run before scrolling starts
+- ~neoscroll-post-hook~ :: Function to run after scrolling ends
+
+** Easing Functions
+
+Choose from different animation curves:
+
+- ~linear~ :: Constant speed
+- ~quadratic~ :: Accelerating motion  
+- ~cubic~ :: Smooth acceleration and deceleration
+- ~sine~ :: Sinusoidal easing
+
+* API Reference
+
+** Core Function
+
+#+begin_src emacs-lisp
+(neoscroll-scroll LINES &optional OPTS)
+#+end_src
+
+Scroll ~LINES~ with optional configuration ~OPTS~.
+
+Options:
+- ~:duration~ :: Animation duration in seconds
+- ~:easing~ :: Easing function to use
+- ~:move-cursor~ :: Whether to move cursor with scroll (default: t)
+- ~:info~ :: Information passed to hooks
+
+Example:
+#+begin_src emacs-lisp
+(neoscroll-scroll 10 '(:duration 0.3 :easing cubic :move-cursor nil))
+#+end_src
+
+** Predefined Commands
+
+- ~neoscroll-ctrl-u~ :: Scroll up half page
+- ~neoscroll-ctrl-d~ :: Scroll down half page
+- ~neoscroll-ctrl-b~ :: Scroll up full page
+- ~neoscroll-ctrl-f~ :: Scroll down full page
+- ~neoscroll-ctrl-y~ :: Scroll up one line
+- ~neoscroll-ctrl-e~ :: Scroll down one line
+
+* Performance
+
+- Uses native compilation when available for optimal performance
+- Automatically enables ~pixel-scroll-precision-mode~ on graphical displays
+- Intelligent time stepping based on easing functions
+- Responsive interrupt handling prevents blocking
+
+* Compatibility
+
+- *Emacs Version*: 29.1+
+- *Evil Mode*: Full integration and compatibility
+- *Display*: Works on both graphical and terminal Emacs
+- *Pixel Scrolling*: Automatically uses pixel-precise scrolling when available
+
+* Troubleshooting
+
+** Animation Not Smooth
+- Ensure you're using a graphical Emacs session
+- Check that ~pixel-scroll-precision-mode~ is available and enabled
+- Try different easing functions
+
+** Scrolling Interrupted
+- This is by design for responsiveness
+- Use ~C-g~ or ~<Escape>~ (in Evil mode) to stop animations
+- Adjust durations if animations are too long
+
+** Evil Mode Issues  
+- Ensure Evil is loaded before neoscroll
+- Check that key bindings are not conflicting
+- Use the emergency stop keys if needed
+
+* License
+
+GPL-3.0-or-later
+
+* Contributing
+
+Issues and pull requests welcome at: [[https://github.com/0WD0/neoscroll.el]]
