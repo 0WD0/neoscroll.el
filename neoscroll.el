@@ -387,15 +387,13 @@
     
     ;; Set up Evil keybindings
     (when (fboundp 'evil-define-key*)
-      ;; Bind in normal and visual states, but not insert or motion states
-      (dolist (state '(normal visual))
-        (evil-define-key* state 'global
-          (kbd "C-d") #'neoscroll-ctrl-d
-          (kbd "C-u") #'neoscroll-ctrl-u  
-          (kbd "C-f") #'neoscroll-ctrl-f
-          (kbd "C-b") #'neoscroll-ctrl-b
-          (kbd "C-y") #'neoscroll-ctrl-y
-          (kbd "C-e") #'neoscroll-ctrl-e)))))
+      ;; Advice Evil's scroll commands to use neoscroll
+      (advice-add 'evil-scroll-down :override #'neoscroll-ctrl-d)
+      (advice-add 'evil-scroll-up :override #'neoscroll-ctrl-u)
+      (advice-add 'evil-scroll-page-down :override #'neoscroll-ctrl-f)
+      (advice-add 'evil-scroll-page-up :override #'neoscroll-ctrl-b)
+      (advice-add 'evil-scroll-line-up :override #'neoscroll-ctrl-y)
+      (advice-add 'evil-scroll-line-down :override #'neoscroll-ctrl-e))))
 
 (defun neoscroll--remove-evil-integration ()
   "Remove Evil mode integration."
@@ -403,7 +401,14 @@
     (advice-remove 'evil-next-line #'neoscroll--interrupt)
     (advice-remove 'evil-previous-line #'neoscroll--interrupt)
     (advice-remove 'evil-forward-char #'neoscroll--interrupt)
-    (advice-remove 'evil-backward-char #'neoscroll--interrupt)))
+    (advice-remove 'evil-backward-char #'neoscroll--interrupt)
+    ;; Remove scroll command advice
+    (advice-remove 'evil-scroll-down #'neoscroll-ctrl-d)
+    (advice-remove 'evil-scroll-up #'neoscroll-ctrl-u)
+    (advice-remove 'evil-scroll-page-down #'neoscroll-ctrl-f)
+    (advice-remove 'evil-scroll-page-up #'neoscroll-ctrl-b)
+    (advice-remove 'evil-scroll-line-up #'neoscroll-ctrl-y)
+    (advice-remove 'evil-scroll-line-down #'neoscroll-ctrl-e)))
 
 ;;
 ;;; Minor mode
