@@ -391,7 +391,6 @@
           (kbd "C-b") #'neoscroll-ctrl-b
           (kbd "C-y") #'neoscroll-ctrl-y
           (kbd "C-e") #'neoscroll-ctrl-e
-          (kbd "<escape>") #'neoscroll-emergency-stop
           (kbd "C-g") #'neoscroll-emergency-stop)))))
 
 (defun neoscroll--remove-evil-integration ()
