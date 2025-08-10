@@ -356,18 +356,10 @@
   ;; Enable pixel scrolling if available
   (when (and (display-graphic-p)
              (fboundp 'pixel-scroll-precision-mode))
-    (pixel-scroll-precision-mode 1))
+    (pixel-scroll-precision-mode 1)))
   
-  ;; Set up key mappings
-  (let ((keymap-alist '(("C-u" . neoscroll-ctrl-u)
-                        ("C-d" . neoscroll-ctrl-d)
-                        ("C-b" . neoscroll-ctrl-b)
-                        ("C-f" . neoscroll-ctrl-f)
-                        ("C-y" . neoscroll-ctrl-y)
-                        ("C-e" . neoscroll-ctrl-e))))
-    (dolist (mapping neoscroll-mappings)
-      (when-let ((command (cdr (assoc mapping keymap-alist))))
-        (global-set-key (kbd mapping) command)))))
+  ;; For non-Evil users, don't override standard Emacs keybindings
+  ;; Users can manually bind keys if they want smooth scrolling
 
 ;;
 ;;; Evil integration
@@ -388,17 +380,19 @@
       (neoscroll--interrupt)
       (keyboard-quit))
     
-    ;; Set up Evil keybindings
+    ;; Set up Evil keybindings (only in normal and visual states)
     (when (fboundp 'evil-define-key*)
-      (evil-define-key* 'normal 'global
-        (kbd "C-d") #'neoscroll-ctrl-d
-        (kbd "C-u") #'neoscroll-ctrl-u  
-        (kbd "C-f") #'neoscroll-ctrl-f
-        (kbd "C-b") #'neoscroll-ctrl-b
-        (kbd "C-y") #'neoscroll-ctrl-y
-        (kbd "C-e") #'neoscroll-ctrl-e
-        (kbd "<escape>") #'neoscroll-emergency-stop
-        (kbd "C-g") #'neoscroll-emergency-stop))))
+      ;; Bind in normal, visual, and motion states, but not insert
+      (dolist (state '(normal visual))
+        (evil-define-key* state 'global
+          (kbd "C-d") #'neoscroll-ctrl-d
+          (kbd "C-u") #'neoscroll-ctrl-u  
+          (kbd "C-f") #'neoscroll-ctrl-f
+          (kbd "C-b") #'neoscroll-ctrl-b
+          (kbd "C-y") #'neoscroll-ctrl-y
+          (kbd "C-e") #'neoscroll-ctrl-e
+          (kbd "<escape>") #'neoscroll-emergency-stop
+          (kbd "C-g") #'neoscroll-emergency-stop)))))
 
 (defun neoscroll--remove-evil-integration ()
   "Remove Evil mode integration."
