@@ -317,7 +317,7 @@
                       (if (fboundp 'line-move-to-column)
                           (line-move-to-column neoscroll--saved-goal-column)
                         (move-to-column neoscroll--saved-goal-column)))))
-              (setq neoscroll--active neoscroll--active-backup)))))
+              (setq neoscroll--active neoscroll--active-backup)))
         (if (> lines-to-scroll 0)
             (scroll-up 1)
           (scroll-down 1)))
@@ -338,7 +338,7 @@
              (time-step-sec (/ time-step-ms 1000.0)))
         (setq neoscroll--timer 
               (run-with-timer time-step-sec nil 
-                              #'neoscroll--scroll-one-step move-cursor info)))))
+                              #'neoscroll--scroll-one-step move-cursor info)))))))
 
 ;;
 ;;; Predefined scroll commands
