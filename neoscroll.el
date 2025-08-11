@@ -130,7 +130,8 @@
     (cancel-timer neoscroll--timer)
     (setq neoscroll--timer nil
           neoscroll--active nil
-          neoscroll--interrupt-flag t)
+          neoscroll--interrupt-flag t
+          neoscroll--saved-goal-column nil)
     ;; Clean up highlighting when interrupted
     (dolist (overlay (overlays-in (point-min) (point-max)))
       (when (overlay-get overlay 'hl-line)
@@ -211,6 +212,7 @@
         (max 1 time-step))))))
 
 (defvar neoscroll--current-opts nil "Current scroll options")
+(defvar neoscroll--saved-goal-column nil "Saved goal column for consistent column preservation")
 
 (defun neoscroll-scroll (lines &optional opts)
   "Scroll LINES with options OPTS using neoscroll.nvim algorithm."
@@ -225,6 +227,20 @@
     
     ;; Early exit if no scrolling needed  
     (unless (zerop lines)
+      ;; For Evil users, set up proper command context for goal column preservation
+      (when (and (featurep 'evil) move-cursor)
+        ;; Set command identity to enable Evil's column tracking
+        (setq this-command (if (> lines 0) 'next-line 'previous-line))
+        ;; Set up temporary-goal-column following Evil's pattern
+        (unless (memq last-command '(next-line previous-line))
+          (setq temporary-goal-column
+                (cond ((and (boundp 'track-eol) track-eol (eolp) (not (bolp)))
+                       most-positive-fixnum)
+                      (t (current-column)))))
+        ;; Save the goal column for consistent use throughout the animation
+        (setq neoscroll--saved-goal-column 
+              (or goal-column temporary-goal-column (current-column))))
+      
       (setq neoscroll--current-opts opts
             neoscroll--total-lines lines
             neoscroll--target-line lines
@@ -267,25 +283,48 @@
       (when (or (bound-and-true-p hl-line-mode)
                 (bound-and-true-p global-hl-line-mode))
         (run-hooks 'post-command-hook))
+      ;; For Evil users, ensure proper final column positioning
+      (when (and (featurep 'evil) neoscroll--saved-goal-column move-cursor)
+        (setq temporary-goal-column neoscroll--saved-goal-column))
+      
       (when neoscroll-post-hook
         (funcall neoscroll-post-hook info))
       (setq neoscroll--timer nil
-            neoscroll--active nil))
+            neoscroll--active nil
+            neoscroll--saved-goal-column nil))
      
      ;; Continue scrolling
      (t
-      ;; Scroll one line
+      ;; Scroll one line - temporarily disable neoscroll interrupt advice
       (if move-cursor
-          (if (> lines-to-scroll 0)
-              (progn (scroll-up 1) (forward-line 1))
-            (progn (scroll-down 1) (forward-line -1)))
+          (let ((neoscroll--active-backup neoscroll--active))
+            (setq neoscroll--active nil) ; Prevent interrupt advice from triggering
+            (unwind-protect
+                (if (> lines-to-scroll 0)
+                    (progn
+                      (scroll-up 1)
+                      (forward-line 1)
+                      ;; For Evil users, restore column using Evil-compatible method
+                      (when (and (featurep 'evil) neoscroll--saved-goal-column)
+                        (if (fboundp 'line-move-to-column)
+                            (line-move-to-column neoscroll--saved-goal-column)
+                          (move-to-column neoscroll--saved-goal-column))))
+                  (progn
+                    (scroll-down 1)
+                    (forward-line -1)
+                    ;; For Evil users, restore column using Evil-compatible method
+                    (when (and (featurep 'evil) neoscroll--saved-goal-column)
+                      (if (fboundp 'line-move-to-column)
+                          (line-move-to-column neoscroll--saved-goal-column)
+                        (move-to-column neoscroll--saved-goal-column)))))
+              (setq neoscroll--active neoscroll--active-backup)))))
         (if (> lines-to-scroll 0)
             (scroll-up 1)
           (scroll-down 1)))
-      
+
       ;; Update position
       (setq neoscroll--relative-line (+ neoscroll--relative-line 
-                                       (if (> lines-to-scroll 0) 1 -1)))
+                                        (if (> lines-to-scroll 0) 1 -1)))
       
       ;; Force highlight refresh
       (when (bound-and-true-p hl-line-mode)
@@ -299,7 +338,7 @@
              (time-step-sec (/ time-step-ms 1000.0)))
         (setq neoscroll--timer 
               (run-with-timer time-step-sec nil 
-                             #'neoscroll--scroll-one-step move-cursor info)))))))
+                              #'neoscroll--scroll-one-step move-cursor info)))))
 
 ;;
 ;;; Predefined scroll commands
@@ -339,14 +378,14 @@
   "Smooth scroll up by configured line step."
   (interactive)
   (neoscroll-scroll (- neoscroll-line-step)
-                   (append opts `(:duration ,neoscroll-line-duration :move-cursor nil))))
+                    (append opts `(:duration ,neoscroll-line-duration :move-cursor nil))))
 
 ;;;###autoload
 (defun neoscroll-ctrl-e (&optional opts)
   "Smooth scroll down by configured line step."
   (interactive)
   (neoscroll-scroll neoscroll-line-step
-                   (append opts `(:duration ,neoscroll-line-duration :move-cursor nil))))
+                    (append opts `(:duration ,neoscroll-line-duration :move-cursor nil))))
 
 ;;
 ;;; Setup function
@@ -362,9 +401,9 @@
   (when (and (display-graphic-p)
              (fboundp 'pixel-scroll-precision-mode))
     (pixel-scroll-precision-mode 1)))
-  
-  ;; For non-Evil users, don't override standard Emacs keybindings
-  ;; Users can manually bind keys if they want smooth scrolling
+
+;; For non-Evil users, don't override standard Emacs keybindings
+;; Users can manually bind keys if they want smooth scrolling
 
 ;;
 ;;; Evil integration
